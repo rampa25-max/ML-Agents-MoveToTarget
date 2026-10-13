@@ -1,8 +1,10 @@
+using Unity.InferenceEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 public class MoveToTargetAgent : Agent
 {
@@ -15,16 +17,20 @@ public class MoveToTargetAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        transform.localPosition = new Vector3(
-            Random.Range(-4f, 4f), 0.5f, Random.Range(-4f, 0f));
-        target.localPosition = new Vector3(
-            Random.Range(-4f, 4f), 0.5f, Random.Range(1f, 4f));
+        transform.localPosition = new Vector3( 0, 0.5f, 0);
+        target.localPosition = new Vector3(0, 0.5f, 98);
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
         sensor.AddObservation(transform.localPosition); // 3
         sensor.AddObservation(target.localPosition);    // 3
+        sensor.AddObservation((target.localPosition - transform.localPosition).normalized);
+        float d = Vector3.Distance(transform.localPosition, target.localPosition);
+        sensor.AddObservation(d / 10f);
+        sensor.AddObservation((float)StepCount / MaxStep);
+
+
     }
     public override void OnActionReceived(ActionBuffers actions)
     {
@@ -33,9 +39,10 @@ public class MoveToTargetAgent : Agent
 
         Vector3 move = new Vector3(moveX, 0f, moveZ);
         transform.localPosition += move * moveSpeed * Time.deltaTime;
-
+        AddReward(-0.001f * move.magnitude);
         // Small penalty every step so it learns to hurry
         if (MaxStep > 0) AddReward(-1f / MaxStep);
+
     }
     public override void Heuristic(in ActionBuffers actionsOut)
     {
@@ -55,13 +62,31 @@ public class MoveToTargetAgent : Agent
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Target"))
+        if (other.CompareTag("Spawner"))
+        {
+            SetReward(0.5f);
+            floor.material.color = winColour;
+            Destroy(other.gameObject);
+        }
+        else if (other.CompareTag("CheckPoint"))
+        {
+            SetReward(0.5f);
+            floor.material.color = winColour;
+            Destroy(other.gameObject.transform.parent.gameObject);
+        }
+        else if (other.CompareTag("Target"))
         {
             SetReward(1f);
             floor.material.color = winColour;
             EndEpisode();
         }
         else if (other.CompareTag("Wall"))
+        {
+            SetReward(-0.5f);
+            floor.material.color = loseColour;
+            EndEpisode();
+        }
+        else if (other.CompareTag("Truck"))
         {
             SetReward(-1f);
             floor.material.color = loseColour;
