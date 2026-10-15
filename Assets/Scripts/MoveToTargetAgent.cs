@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using Unity.InferenceEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
@@ -64,34 +66,47 @@ public class MoveToTargetAgent : Agent
     {
         if (other.CompareTag("Spawner"))
         {
-            SetReward(0.5f);
+            StopCoroutine(ShortTimerCheck());
+            SetReward(1f);
             floor.material.color = winColour;
             Destroy(other.gameObject);
+            StartCoroutine(ShortTimerCheck());
         }
         else if (other.CompareTag("CheckPoint"))
         {
-            SetReward(0.5f);
+            StopCoroutine(ShortTimerCheck());
+            SetReward(0.75f);
             floor.material.color = winColour;
             Destroy(other.gameObject.transform.parent.gameObject);
+            StartCoroutine(ShortTimerCheck());
         }
         else if (other.CompareTag("Target"))
         {
-            SetReward(1f);
+            StopCoroutine(ShortTimerCheck());
+            SetReward(10f);
             floor.material.color = winColour;
             EndEpisode();
         }
         else if (other.CompareTag("Wall"))
         {
-            SetReward(-0.5f);
+            StopCoroutine(ShortTimerCheck());
+            SetReward(-1f);
             floor.material.color = loseColour;
-            EndEpisode();
+            StartCoroutine(ShortTimerCheck());
         }
         else if (other.CompareTag("Truck"))
         {
+            StopCoroutine(ShortTimerCheck());
             SetReward(-1f);
             floor.material.color = loseColour;
             EndEpisode();
         }
     }
+    IEnumerator ShortTimerCheck()
+    {
+        yield return new WaitForFixedUpdate();
+        floor.material.color = idleColour;
+    }
+
 
 }
