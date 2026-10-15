@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class NpcMovement : MonoBehaviour
 {
-    public float SpeedNumber = -1;
+    float SpeedNumber = 0.5f;
     GameObject Npc;
     public Transform EndPoint;
     void Start()

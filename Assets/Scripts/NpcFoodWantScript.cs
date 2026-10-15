@@ -5,13 +5,14 @@ using UnityEngine.UI;
 
 public class NpcFoodWantScript : MonoBehaviour
 {
-    public int MaxIngredientsAllowed = 5;
+    int MaxIngredientsAllowed = 4;
     public Sprite[] FoodIngredients;
     public List<Sprite> NpcWants = new List<Sprite>();
     public GameObject SpriteSheet;
     void Awake()
     {
         NpcWants.Add(FoodIngredients[0]);
+        NpcWants.Add(FoodIngredients[2]);
 
         int Amount = Random.Range(1, MaxIngredientsAllowed);
 
