@@ -9,6 +9,13 @@ TagManager:
   - CheckPoint
   - Truck
   - Spawner
+  - Stove
+  - Placement
+  - Condiments
+  - Fridge
+  - CuttingBoard
+  - Bell
+  - Ingredient
   layers:
   - Default
   - TransparentFX
