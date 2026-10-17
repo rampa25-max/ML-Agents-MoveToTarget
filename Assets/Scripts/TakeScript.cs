@@ -1,14 +1,17 @@
+using NUnit.Framework;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class TakeScript : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    CookingAgent agent;
+    public List<Sprite> Foods;
+    public List<int> Amount;
     void Start()
     {
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         

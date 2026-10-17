@@ -10,6 +10,8 @@ using UnityEngine.Rendering;
 
 public class CookingAgent : Agent
 {
+    [SerializeField] private Animator animator;
+
     [Header("Placement")]
     [SerializeField] private Transform CookingStation;
     [SerializeField] private Transform IngredientStation;
@@ -30,10 +32,13 @@ public class CookingAgent : Agent
     [SerializeField] private Color idleColour;
 
     [Header("BotSettings")]
-    private bool ShiftActivated = false;
+    [SerializeField] private bool InteractActivated = false;
+    [SerializeField] private bool ShiftActivated = false;
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float RunSpeed = 6f;
 
+    bool InMenu = false;
+    int StunNumber = 1;
     private void Start()
     {
         idleColour = floor.material.color;
@@ -47,6 +52,7 @@ public class CookingAgent : Agent
         }
 
         if (FoodHolder.sprite != null && CurrentlyHolding == null) { FoodHolder.sprite = null; }
+        MaxStep = 5000;
     }
     public override void OnEpisodeBegin()
     {
@@ -66,16 +72,27 @@ public class CookingAgent : Agent
     }
     public override void OnActionReceived(ActionBuffers actions)
     {
-        float moveX = actions.ContinuousActions[0];
-        float moveZ = actions.ContinuousActions[1];
+        float moveX = actions.ContinuousActions[0] * -1;
+        float moveZ = actions.ContinuousActions[1] * -1;
 
-        if (actions.ContinuousActions[2] == 1) { ShiftActivated = true; }
-        else if (actions.ContinuousActions[2] != 1) { ShiftActivated = false; }
-
-        Vector3 move = new Vector3(moveX, 0f, moveZ);
-        if (!ShiftActivated) { transform.localPosition += move * moveSpeed * Time.deltaTime; }
-        else { transform.localPosition += move * RunSpeed * Time.deltaTime; }
-        AddReward(-0.001f * move.magnitude);
+        if (!InMenu)
+        {
+            if (moveX != 0 || moveZ != 0) { animator.SetBool("Moving", true); } else if (moveX == 0 && moveZ == 0) { animator.SetBool("Moving", false); }
+            if (actions.ContinuousActions[2] == 1)
+            {
+                if (ShiftActivated == false) { AddReward(0.5f); }
+                ShiftActivated = true;
+            }
+            else if (actions.ContinuousActions[2] != 1) { if (ShiftActivated == true) { AddReward(-0.5f); } ShiftActivated = false; }
+            animator.SetBool("Running", ShiftActivated);
+            if (actions.ContinuousActions[3] == 1) { InteractActivated = true; }
+            else if (actions.ContinuousActions[3] != 1) { InteractActivated = false; }
+            animator.SetBool("Interacting", InteractActivated);
+            Vector3 move = new Vector3(moveX, 0f, moveZ);
+            if (!ShiftActivated) { transform.localPosition += move * moveSpeed * Time.deltaTime * StunNumber; }
+            else { transform.localPosition += move * RunSpeed * Time.deltaTime * StunNumber; }
+            AddReward(-0.001f * move.magnitude);
+        }
         // Small penalty every step so it learns to hurry
         if (MaxStep > 0) { AddReward(-1f / MaxStep); }
     }
@@ -91,7 +108,12 @@ public class CookingAgent : Agent
                       - (kb.sKey.isPressed ? 1f : 0f);
 
         continuous[2] = (kb.shiftKey.isPressed ? 1f : 0f);
+        continuous[3] = (kb.eKey.isPressed ? 1f : 0f);
     }
+    public void Stunned()
+    { StunNumber = 0; }
+    public void UnStun()
+    { StunNumber = 1; }
     /*public override void Initialize()   // runs once at startup
     {
         floor.material.color = idleColour;

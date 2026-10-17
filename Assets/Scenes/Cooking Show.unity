@@ -513,7 +513,7 @@ Transform:
   m_GameObject: {fileID: 431936639}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0, z: -0.691}
+  m_LocalPosition: {x: 0, y: 0, z: -0.691}
   m_LocalScale: {x: 0.64645, y: 1.21914, z: 0.64645}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -990,7 +990,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 728518685}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1002,7 +1002,7 @@ Transform:
   - {fileID: 543450652346768669}
   - {fileID: 2028209578}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &728518687
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2735,9 +2735,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 431936640}
   - {fileID: 718043773841175582}
   - {fileID: 8607673915881272113}
-  - {fileID: 431936640}
   m_Father: {fileID: 728518686}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &591642545826406415
@@ -3790,7 +3790,7 @@ SkinnedMeshRenderer:
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
   m_SkinnedMotionVectors: 1
-  m_Mesh: {fileID: -5179218777290457093, guid: 3c045f4cbd1e18d48bcbab013316fd02, type: 3}
+  m_Mesh: {fileID: -5179218777290457093, guid: 281b8e187a0852245a1ed529d3a92962, type: 3}
   m_Bones:
   - {fileID: 9164081793098884299}
   - {fileID: 8033562864009075347}
@@ -4024,8 +4024,8 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132148360087463}
   m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: 3c045f4cbd1e18d48bcbab013316fd02, type: 3}
-  m_Controller: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: 281b8e187a0852245a1ed529d3a92962, type: 3}
+  m_Controller: {fileID: 9100000, guid: 64a935e4195a964409d6bf7c42dbc012, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -4053,9 +4053,9 @@ MonoBehaviour:
     VectorObservationSize: 11
     NumStackedVectorObservations: 2
     m_ActionSpec:
-      m_NumContinuousActions: 3
+      m_NumContinuousActions: 4
       BranchSizes: 
-    VectorActionSize: 03000000
+    VectorActionSize: 04000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 1
     hasUpgradedBrainParametersWithActionSpec: 1
@@ -4084,6 +4084,7 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 5000
+  animator: {fileID: 5866666020561258343}
   CookingStation: {fileID: 4899718879871679744}
   IngredientStation: {fileID: 1393291119344911678}
   FrozenFoodStation: {fileID: 4482304289998385541}
@@ -4097,6 +4098,8 @@ MonoBehaviour:
   winColour: {r: 0, g: 1, b: 0, a: 1}
   loseColour: {r: 1, g: 0, b: 0, a: 1}
   idleColour: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  InteractActivated: 0
+  ShiftActivated: 0
   moveSpeed: 3
   RunSpeed: 6
 --- !u!54 &5866666020561258347
@@ -4162,7 +4165,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -5179218777290457093, guid: 3c045f4cbd1e18d48bcbab013316fd02, type: 3}
+  m_Mesh: {fileID: -5179218777290457093, guid: 281b8e187a0852245a1ed529d3a92962, type: 3}
 --- !u!23 &6199620197925123667
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4394,6 +4397,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05ee720b4fae2c644a3d2412033a6b98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  Foods:
+  - {fileID: 21300000, guid: 11e7fbb9b74ffce47a58ee564b5adcad, type: 3}
+  - {fileID: 21300000, guid: 6f87b47829e4f9e48894fab98464ea85, type: 3}
+  Amount: 140000000f000000
 --- !u!1 &6938799425974852593
 GameObject:
   m_ObjectHideFlags: 0
