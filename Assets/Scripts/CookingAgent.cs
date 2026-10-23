@@ -7,6 +7,7 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 public class CookingAgent : Agent
 {
@@ -37,8 +38,15 @@ public class CookingAgent : Agent
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float RunSpeed = 6f;
 
-    bool InMenu = false;
+
+    public GameObject CurrentMenu;
+    public SelectScript CurrentSelectScript;
+    public bool InMenu = false;
+    bool MenuWait = false;
     int StunNumber = 1;
+
+    public int MaxNum = 0;
+    public int ChooseNumber = 0;
     private void Start()
     {
         idleColour = floor.material.color;
@@ -93,6 +101,42 @@ public class CookingAgent : Agent
             else { transform.localPosition += move * RunSpeed * Time.deltaTime * StunNumber; }
             AddReward(-0.001f * move.magnitude);
         }
+        else if (InMenu)
+        {
+            InteractActivated = false;
+            ShiftActivated = false;
+
+            if (actions.ContinuousActions[1] > 0)
+            {
+                CurrentlyHolding = CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite;
+                CurrentMenu.SetActive(false);
+                InMenu = false;
+                CurrentSelectScript = null;
+                CurrentMenu = null;
+            }
+
+            if (actions.ContinuousActions[1] < 0)
+            {
+                CurrentMenu.SetActive(false);
+                InMenu = false;
+                CurrentSelectScript = null;
+                CurrentMenu = null;
+            }
+            if (MenuWait == false && actions.ContinuousActions[0] > 0)
+            {
+                MenuWait = true;
+                if (ChooseNumber < MaxNum) { ChooseNumber += 1; }
+                else { ChooseNumber = 0; }
+                StartCoroutine(WaitMenuStun());
+            }
+            else if (MenuWait == false && actions.ContinuousActions[0] < 0)
+            {
+                MenuWait = true;
+                if (ChooseNumber > 0) { ChooseNumber -= 1; }
+                else { ChooseNumber = MaxNum; }
+                StartCoroutine(WaitMenuStun());
+            }
+        }
         // Small penalty every step so it learns to hurry
         if (MaxStep > 0) { AddReward(-1f / MaxStep); }
     }
@@ -126,11 +170,33 @@ public class CookingAgent : Agent
             SetReward(1f);
         }
     }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (InteractActivated == true)
+        {
+            if (other.gameObject.GetComponent<OpenMenu>() != null)
+            { other.gameObject.GetComponent<OpenMenu>().OpeningMenu(); }
+
+            else if (other.gameObject.GetComponent<PlateScript>() != null)
+            { other.gameObject.GetComponent<PlateScript>().PlateFood(); }
+
+            else if (other.gameObject.GetComponent<CookingProcess>() != null)
+            { other.gameObject.GetComponent<CookingProcess>().StartCooking(); }
+
+            else if (other.gameObject.GetComponent<CuttingProcess>() != null)
+            { other.gameObject.GetComponent<CuttingProcess>().Cutting(); }
+        }
+    }
     IEnumerator ShortTimerCheck()
     {
         yield return new WaitForFixedUpdate();
         floor.material.color = idleColour;
     }
-
+    IEnumerator WaitMenuStun()
+    {
+        yield return new WaitForSecondsRealtime(0.25f);
+        yield return MenuWait = false;   
+    }
 
 }

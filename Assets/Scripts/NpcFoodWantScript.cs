@@ -9,8 +9,11 @@ public class NpcFoodWantScript : MonoBehaviour
     public Sprite[] FoodIngredients;
     public List<Sprite> NpcWants = new List<Sprite>();
     public GameObject SpriteSheet;
+
+    public GameObject FoodOrderCam;
     void Awake()
     {
+        FoodOrderCam = GameObject.Find("FoodOrder");
         NpcWants.Add(FoodIngredients[0]);
         NpcWants.Add(FoodIngredients[2]);
 
@@ -36,6 +39,17 @@ public class NpcFoodWantScript : MonoBehaviour
             FoodSprite.GetComponent<Image>().sprite = item;
             FoodSprite.GetComponent<RectTransform>().localPosition = new Vector3(0,-0.2f + movement,0);
             movement += 0.06f;
+        }
+        movement = 0;
+        foreach (var item in NpcWants)
+        {
+            var FoodSprite = Instantiate(SpriteSheet, FoodOrderCam.gameObject.transform, false);
+            FoodSprite.transform.localScale = new Vector3(400, 400, 400);
+            FoodSprite.transform.localPosition = new Vector3(0, 0, 0);
+            FoodSprite.name = item.name;
+            FoodSprite.GetComponent<Image>().sprite = item;
+            FoodSprite.GetComponent<RectTransform>().localPosition = new Vector3(0, -60f + movement, 0);
+            movement += 25f;
         }
 
     }
