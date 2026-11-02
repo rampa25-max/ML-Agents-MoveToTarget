@@ -22,6 +22,7 @@ public class CookingAgent : Agent
 
 
     [SerializeField] private PlateScript Plate;
+    [SerializeField] private CookingProcess Stove;
     public NpcFoodWantScript Npc;
 
     [SerializeField] private Animator animator;
@@ -143,6 +144,10 @@ public class CookingAgent : Agent
             else
             { OriginalDistance = Vector3.Distance(Placements[MustGrab[MustGrabNumber]].position, transform.position); }
 
+            if (Stove.IsCooking)
+            {
+                OriginalDistance = Vector3.Distance(Placements[6].position, transform.position);
+            }
             Vector3 move = new Vector3(moveX, 0f, moveZ);
 
             if (!ShiftActivated) { transform.localPosition += move * moveSpeed * Time.deltaTime * StunNumber; }
@@ -256,10 +261,13 @@ public class CookingAgent : Agent
 
             else if (other.gameObject.GetComponent<PlateScript>() != null)
             {
-                if (CurrentlyHolding != null) { other.gameObject.GetComponent<PlateScript>().PlateFood(); }
+                if (CurrentlyHolding != null) 
+                { 
+                    other.gameObject.GetComponent<PlateScript>().PlateFood();
+                    if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
+                    { AddReward(0.1f); Debug.Log("Got to RightPlace"); MustGrabNumber += 1; }
+                }
                 else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); }
-                if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(0.1f); Debug.Log("Got to RightPlace"); }
             }
 
             else if (other.gameObject.GetComponent<CookingProcess>() != null)

@@ -24,6 +24,8 @@ public class CookingProcess : MonoBehaviour
 
     Sprite CurrentSprite;
 
+    public bool IsCooking = false;
+
     [Header("Settings")]
 
     public int CurrentTime = 0;
@@ -50,6 +52,7 @@ public class CookingProcess : MonoBehaviour
         {
             if (Agent.CurrentlyHolding == NeededSprite)
             {
+                IsCooking = true;
                 CurrentSprite = NeededSprite;
                 StartCoroutine(WaitTimer());
                 Agent.CurrentlyHolding = null;
@@ -62,6 +65,7 @@ public class CookingProcess : MonoBehaviour
 
         else if (InUse == true && CanTake == true)
         {
+            IsCooking = false;
             Debug.Log("Taking Food");
             StopCoroutine(WaitTimer());
             Agent.CurrentlyHolding = CurrentSprite;
