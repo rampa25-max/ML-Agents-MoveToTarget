@@ -1074,6 +1074,7 @@ MonoBehaviour:
   - {fileID: 809500921}
   - {fileID: 63142862}
   MaxNum: 0
+  CorrectChoice: 0
   DisableParent: {fileID: 1619163661}
 --- !u!1 &809500920
 GameObject:
@@ -1595,8 +1596,8 @@ GameObject:
   - component: {fileID: 1136162014}
   - component: {fileID: 1136162013}
   - component: {fileID: 1136162012}
-  m_Layer: 0
-  m_Name: Stove (1)
+  m_Layer: 3
+  m_Name: Stove
   m_TagString: Stove
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3057,6 +3058,7 @@ MonoBehaviour:
   - {fileID: 1237198411}
   - {fileID: 1635816731}
   MaxNum: 0
+  CorrectChoice: 0
   DisableParent: {fileID: 404629746}
 --- !u!114 &1888366109
 MonoBehaviour:
@@ -3217,7 +3219,7 @@ GameObject:
   - component: {fileID: 1912823071}
   - component: {fileID: 1912823070}
   - component: {fileID: 1912823069}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Trash Can(PlaceHolder)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3767,7 +3769,7 @@ GameObject:
   - component: {fileID: 4247728873750128796}
   - component: {fileID: 7695934712099101569}
   - component: {fileID: 7695934712099101570}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plate
   m_TagString: Placement
   m_Icon: {fileID: 0}
@@ -3839,7 +3841,7 @@ GameObject:
   - component: {fileID: 2637527843570816041}
   - component: {fileID: 4318548619545331109}
   - component: {fileID: 7516602276572862202}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Right SideWall
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -3953,9 +3955,9 @@ GameObject:
   - component: {fileID: 6914896017899096119}
   - component: {fileID: 6914896017899096118}
   - component: {fileID: 6914896017899096120}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: DoubleFridge
-  m_TagString: Untagged
+  m_TagString: Fridge
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4208,7 +4210,7 @@ GameObject:
   - component: {fileID: 5355192090887083138}
   - component: {fileID: 8413604619697186493}
   - component: {fileID: 9140393969838484694}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Left Side Wall
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -4384,7 +4386,7 @@ GameObject:
   - component: {fileID: 6711059814480961695}
   - component: {fileID: 7182663609481684296}
   - component: {fileID: 7182663609481684297}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Window Till
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -4452,7 +4454,7 @@ GameObject:
   - component: {fileID: 6409100969722709586}
   - component: {fileID: 8861200814593972417}
   - component: {fileID: 8861200814593972418}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Back Wall
   m_TagString: Wall
   m_Icon: {fileID: 0}
@@ -4571,7 +4573,7 @@ GameObject:
   - component: {fileID: 8123464878546649301}
   - component: {fileID: 8123464878546649300}
   - component: {fileID: 8123464878546649302}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Stove
   m_TagString: Stove
   m_Icon: {fileID: 0}
@@ -4591,7 +4593,7 @@ GameObject:
   - component: {fileID: 2633847946201230860}
   - component: {fileID: 7518978815710847975}
   - component: {fileID: 7518978815710847976}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Bell
   m_TagString: Bell
   m_Icon: {fileID: 0}
@@ -4898,7 +4900,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
   m_BrainParameters:
-    VectorObservationSize: 5
+    VectorObservationSize: 6
     NumStackedVectorObservations: 2
     m_ActionSpec:
       m_NumContinuousActions: 4
@@ -4932,6 +4934,17 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 7500
+  AgentBehavior: {fileID: 0}
+  Placements:
+  - {fileID: 1393291119344911678}
+  - {fileID: 1393291119344911678}
+  - {fileID: 4482304289998385541}
+  - {fileID: 4482304289998385541}
+  - {fileID: 4482304289998385541}
+  - {fileID: 1393291119344911678}
+  - {fileID: 4899718879871679744}
+  - {fileID: 7695934712099101568}
+  - {fileID: 7518978815710847974}
   Foods:
   - {fileID: 21300000, guid: 33bf2e4d300696f43ba334de73ba6dd9, type: 3}
   - {fileID: 21300000, guid: 81cb2ade15b6bc14abeddf7d3f611467, type: 3}
@@ -4958,6 +4971,8 @@ MonoBehaviour:
   InMenu: 0
   MaxNum: 0
   ChooseNumber: 0
+  MustGrab: 
+  CurrentTask: {x: 0, y: 0, z: 0}
 --- !u!54 &5866666020561258347
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -5035,14 +5050,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Sensors.RayPerceptionSensorComponent3D
   m_SensorName: RayPerceptionSensor
-  m_DetectableTags: []
+  m_DetectableTags:
+  - Stove
+  - Ingredient
+  - Placement
+  - Bell
+  - Fridge
   m_RaysPerDirection: 15
   m_MaxRayDegrees: 180
   m_SphereCastRadius: 0.4
   m_RayLength: 20
   m_RayLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 72
   m_ObservationStacks: 1
   m_AlternatingRayOrder: 1
   m_UseBatchedRaycasts: 0
@@ -5189,7 +5209,7 @@ GameObject:
   - component: {fileID: 9134848628657654656}
   m_Layer: 0
   m_Name: Skinny TableTop
-  m_TagString: Ingredient
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5304,7 +5324,7 @@ GameObject:
   - component: {fileID: 7181897098560530843}
   - component: {fileID: 7181897098560530842}
   - component: {fileID: 7181897098560530844}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: IngredientBlock
   m_TagString: Ingredient
   m_Icon: {fileID: 0}

@@ -7,6 +7,7 @@ public class SelectScript : MonoBehaviour
     RectTransform ThisRect;
     public List<RectTransform> Foods;
     [SerializeField] int MaxNum;
+    public bool CorrectChoice = false;
 
     public GameObject DisableParent;
     void Awake()
