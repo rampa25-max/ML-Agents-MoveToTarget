@@ -2,9 +2,16 @@ using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Unity.VisualScripting;
+using TMPro;
 
 public class NpcFoodWantScript : MonoBehaviour
 {
+    CookingAgent Agent;
+
+    NpcSpawnScript Spawner;
+    public GameObject NpcParent;
+
     int MaxIngredientsAllowed = 4;
     public Sprite[] FoodIngredients;
     public List<Sprite> NpcWants = new List<Sprite>();
@@ -13,7 +20,10 @@ public class NpcFoodWantScript : MonoBehaviour
     public GameObject FoodOrderCam;
     void Awake()
     {
-        FoodOrderCam = GameObject.Find("FoodOrder");
+        Spawner = GameObject.FindAnyObjectByType<NpcSpawnScript>();
+        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
+        FoodOrderCam = GameObject.Find("FoodOrderStorer");
+                    
         NpcWants.Add(FoodIngredients[0]);
         NpcWants.Add(FoodIngredients[2]);
 
@@ -54,8 +64,39 @@ public class NpcFoodWantScript : MonoBehaviour
 
     }
 
-    void Update()
+    public void CheckFood(List<Sprite> PlatedFood)
     {
-        
+        float Reward = 0;
+        Debug.Log("Serving Food");
+
+        for (int i = 0; i < NpcWants.Count; i ++)
+        {
+            if (i < PlatedFood.Count)
+            {
+                if (PlatedFood[i] == NpcWants[i])
+                {
+                    Debug.Log("Adding Points");
+                    Reward += 0.3f;
+                }
+                else if (PlatedFood[i] != NpcWants[i])
+                {
+                    Debug.Log("Deducting Points");
+                    Reward -= 0.2f;
+                }
+            }
+            else if (i >= PlatedFood.Count) { Debug.Log("Deducting Points"); Reward -= 0.3f; }
+
+            if (i < PlatedFood.Count - 1 &&  i >= NpcWants.Count - 1) 
+            { float Remove = PlatedFood.Count - NpcWants.Count; Remove = Remove * 0.2f; Reward -= Remove; }
+        }
+        Agent.AddReward(Reward);
+        Agent.ScoreNum += Reward;
+        string RewardText = "Got rewarded" + Reward.ToString() + "Points";
+        Debug.Log(RewardText);
+
+        Destroy(FoodOrderCam);
+
+        Spawner.CurrentNpc = null;
+        Destroy(NpcParent);
     }
 }

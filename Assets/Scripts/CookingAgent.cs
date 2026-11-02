@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.InferenceEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using Unity.VisualScripting;
+using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -11,17 +14,17 @@ using UnityEngine.UI;
 
 public class CookingAgent : Agent
 {
+    [SerializeField] private Sprite[] Foods;
+
+
+    [SerializeField] private PlateScript Plate;
+    public NpcFoodWantScript Npc;
+
     [SerializeField] private Animator animator;
 
     [Header("Placement")]
-    [SerializeField] private Transform CookingStation;
-    [SerializeField] private Transform IngredientStation;
-    [SerializeField] private Transform FrozenFoodStation;
-    [SerializeField] private Transform CondimentStation;
-    [SerializeField] private Transform CuttingStation;
+    TextMeshProUGUI ScoreBoard;
 
-    [SerializeField] private Transform Bell;
-    [SerializeField] private Transform FoodTrayPlacement;
     [SerializeField] private Renderer floor;
 
     [Header("Extras")]
@@ -39,6 +42,7 @@ public class CookingAgent : Agent
     [SerializeField] private float RunSpeed = 6f;
 
 
+    public float ScoreNum = 0;
     public GameObject CurrentMenu;
     public SelectScript CurrentSelectScript;
     public bool InMenu = false;
@@ -49,34 +53,53 @@ public class CookingAgent : Agent
     public int ChooseNumber = 0;
     private void Start()
     {
+        Plate = GameObject.FindAnyObjectByType<PlateScript>();
+        ScoreBoard = GameObject.Find("ScoreBoard").GetComponent<TextMeshProUGUI>();
         idleColour = floor.material.color;
         ShiftActivated = false;
     }
     private void FixedUpdate()
     {
+        if (Npc == null) {Npc = GameObject.FindAnyObjectByType<NpcFoodWantScript>(); }
         if (CurrentlyHolding != null)
         {
             if (FoodHolder.sprite != CurrentlyHolding) { FoodHolder.sprite = CurrentlyHolding; }
         }
 
         if (FoodHolder.sprite != null && CurrentlyHolding == null) { FoodHolder.sprite = null; }
-        MaxStep = 5000;
+
+        ScoreBoard.text = "Score:" + ScoreNum;
     }
     public override void OnEpisodeBegin()
     {
         transform.localPosition = new Vector3(-0.21f, 0.68f, 6.157037f);
+
+        if (GameObject.Find("FoodOrderStorer") != null) { Destroy(GameObject.Find("FoodOrderStorer")); }
+        if (GameObject.Find("NPC") != null ) {Destroy(GameObject.Find("NPC")); }
+        CurrentlyHolding = null;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(transform.localPosition); // 3
-        sensor.AddObservation(CookingStation.localPosition);    // 3
-        sensor.AddObservation((CookingStation.localPosition - transform.localPosition).normalized);
-        float d = Vector3.Distance(transform.localPosition, CookingStation.localPosition);
-        sensor.AddObservation(d / 10f);
+        sensor.AddObservation(transform.localPosition);
+
         sensor.AddObservation((float)StepCount / MaxStep);
 
+        IList<float> Demand = new List<float>();
+        for (int j = 0; j < Foods.Length; j++)
+        {
+            for (int i = 0; i < Foods.Length; i++)
+            {
+                Demand.Add(i);
+            }
+        }
+        sensor.AddObservation(Demand);
 
+        for (int i = 0; i < Foods.Length; i++) 
+        { 
+            if (Foods[i] == CurrentlyHolding)
+            { string DebugText = "Is Holding" + i + Foods[i]; Debug.Log(DebugText); sensor.AddObservation(i); break; }
+        }
     }
     public override void OnActionReceived(ActionBuffers actions)
     {
@@ -88,10 +111,9 @@ public class CookingAgent : Agent
             if (moveX != 0 || moveZ != 0) { animator.SetBool("Moving", true); } else if (moveX == 0 && moveZ == 0) { animator.SetBool("Moving", false); }
             if (actions.ContinuousActions[2] == 1)
             {
-                if (ShiftActivated == false) { AddReward(0.5f); }
                 ShiftActivated = true;
             }
-            else if (actions.ContinuousActions[2] != 1) { if (ShiftActivated == true) { AddReward(-0.5f); } ShiftActivated = false; }
+            else if (actions.ContinuousActions[2] != 1) { ShiftActivated = false; }
             animator.SetBool("Running", ShiftActivated);
             if (actions.ContinuousActions[3] == 1) { InteractActivated = true; }
             else if (actions.ContinuousActions[3] != 1) { InteractActivated = false; }
@@ -165,9 +187,9 @@ public class CookingAgent : Agent
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Stove"))
+        if (other.CompareTag("Wall"))
         {
-            SetReward(1f);
+            transform.localPosition = new Vector3(-0.21f, 0.68f, 6.157037f);
         }
     }
 
@@ -179,13 +201,22 @@ public class CookingAgent : Agent
             { other.gameObject.GetComponent<OpenMenu>().OpeningMenu(); }
 
             else if (other.gameObject.GetComponent<PlateScript>() != null)
-            { other.gameObject.GetComponent<PlateScript>().PlateFood(); }
+            {
+                if (CurrentlyHolding != null) { other.gameObject.GetComponent<PlateScript>().PlateFood(); }
+                else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); }
+            }
 
             else if (other.gameObject.GetComponent<CookingProcess>() != null)
             { other.gameObject.GetComponent<CookingProcess>().StartCooking(); }
 
             else if (other.gameObject.GetComponent<CuttingProcess>() != null)
             { other.gameObject.GetComponent<CuttingProcess>().Cutting(); }
+
+            else if (other.gameObject.GetComponent<BellScript>() != null)
+            { other.gameObject.GetComponent<BellScript>().GiveFood(); }
+
+            else if (other.gameObject.GetComponent<TrashScript>() != null)
+            { other.gameObject.GetComponent<TrashScript>().TrashFood(); }
         }
     }
     IEnumerator ShortTimerCheck()
