@@ -64,7 +64,7 @@ public class NpcFoodWantScript : MonoBehaviour
 
     }
 
-    public void CheckFood(List<Sprite> PlatedFood)
+    public void CheckFood(List<Sprite> PlatedFood,PlateScript Plate)
     {
         float Reward = 0;
         Debug.Log("Serving Food");
@@ -76,12 +76,12 @@ public class NpcFoodWantScript : MonoBehaviour
                 if (PlatedFood[i] == NpcWants[i])
                 {
                     Debug.Log("Adding Points");
-                    Reward += 0.3f;
+                    Reward += 0.5f;
                 }
                 else if (PlatedFood[i] != NpcWants[i])
                 {
                     Debug.Log("Deducting Points");
-                    Reward -= 0.2f;
+                    Reward -= 0.4f;
                 }
             }
             else if (i >= PlatedFood.Count) { Debug.Log("Deducting Points"); Reward -= 0.3f; }
@@ -89,12 +89,20 @@ public class NpcFoodWantScript : MonoBehaviour
             if (i < PlatedFood.Count - 1 &&  i >= NpcWants.Count - 1) 
             { float Remove = PlatedFood.Count - NpcWants.Count; Remove = Remove * 0.2f; Reward -= Remove; }
         }
+
+        int Victory = (PlatedFood.Count - 1);
+        Victory = Mathf.RoundToInt(Victory / Reward);
+        if (Victory == 2) { Agent.StartCoroutine(Agent.ShortWinTimerCheck()); }
+        else { Agent.StartCoroutine(Agent.ShortWrongTimerCheck()); }
+
         Agent.AddReward(Reward);
         Agent.ScoreNum += Reward;
         string RewardText = "Got rewarded" + Reward.ToString() + "Points";
         Debug.Log(RewardText);
 
         Destroy(FoodOrderCam);
+        Plate.SpriteGameObject = new List<GameObject>();
+
 
         Spawner.CurrentNpc = null;
         Destroy(NpcParent);

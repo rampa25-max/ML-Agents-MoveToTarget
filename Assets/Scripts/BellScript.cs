@@ -39,7 +39,7 @@ public class BellScript : MonoBehaviour
                 if (Plate.PlatedFood.Count > 0)
                 {
                     WaitTime = true;
-                    CurrentNpc.GetComponent<NpcFoodWantScript>().CheckFood(Plate.PlatedFood);
+                    CurrentNpc.GetComponent<NpcFoodWantScript>().CheckFood(Plate.PlatedFood,Plate);
                     Plate.PlatedFood.Clear();
 
                     int ChildNum = Plate.SpriteHolder.gameObject.transform.childCount;

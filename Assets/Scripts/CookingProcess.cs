@@ -92,6 +92,7 @@ public class CookingProcess : MonoBehaviour
             CanTake = true;
             Debug.Log("CanTake Food");
             Debug.Log("Cooked the Food");
+            Agent.AddReward(0.2f);
         }
 
         CurrentTime = BurntTimer;
@@ -102,8 +103,12 @@ public class CookingProcess : MonoBehaviour
         }
         if (InUse == true)
         {
+            InUse = false;
             CurrentSprite = BurntVersion;
             Debug.Log("Burnt the Food");
+            if (IsCooking) { Agent.AddReward(-0.4f); IsCooking = false; }
+            yield return new WaitForSeconds(0.5f);
+            CurrentSprite = null;
         }
     }
 }
