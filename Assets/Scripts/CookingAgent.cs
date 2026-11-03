@@ -62,6 +62,10 @@ public class CookingAgent : Agent
     [SerializeField] bool Finished = false;
 
     public Vector3 CurrentTask;
+
+    float OriginalDistance;
+
+    float NewDistance;
     private void Start()
     {
         Plate = GameObject.FindAnyObjectByType<PlateScript>();
@@ -99,8 +103,6 @@ public class CookingAgent : Agent
     {
         transform.localPosition = new Vector3(-0.21f, 0.68f, 6.157037f);
 
-        if (GameObject.Find("FoodOrderStorer") != null) { Destroy(GameObject.Find("FoodOrderStorer")); }
-        if (GameObject.Find("NPC") != null ) {Destroy(GameObject.Find("NPC")); }
         CurrentlyHolding = null;
     }
 
@@ -111,7 +113,6 @@ public class CookingAgent : Agent
         sensor.AddObservation((float)StepCount / MaxStep);
         
         
-        sensor.AddObservation(MustGrab[MustGrabNumber]);
 
         for (int i = 0; i < Foods.Length; i++) 
         {
@@ -136,34 +137,38 @@ public class CookingAgent : Agent
             else if (actions.ContinuousActions[3] != 1) { InteractActivated = false; }
             animator.SetBool("Interacting", InteractActivated);
 
-            float OriginalDistance;
-            if (!Finished)
+            if (MustGrab.Count > 0)
             {
-                if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
+                if (!Finished)
                 {
-                    OriginalDistance = Vector3.Distance(Placements[7].position, transform.position);
-                }
-                else if (MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
-                {
-                    OriginalDistance = Vector3.Distance(Placements[6].position, transform.position);
-                }
-                else
-                { OriginalDistance = Vector3.Distance(Placements[MustGrab[MustGrabNumber]].position, transform.position); }
+                    if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
+                    {
+                        OriginalDistance = Vector3.Distance(Placements[7].position, transform.position);
+                    }
+                    else if (MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
+                    {
+                        OriginalDistance = Vector3.Distance(Placements[6].position, transform.position);
+                    }
+                    else
+                    { OriginalDistance = Vector3.Distance(Placements[MustGrab[MustGrabNumber]].position, transform.position); }
 
-                if (Stove.IsCooking)
-                {
-                    OriginalDistance = Vector3.Distance(Placements[6].position, transform.position);
+                    if (Stove.IsCooking)
+                    {
+                        OriginalDistance = Vector3.Distance(Placements[6].position, transform.position);
+                    }
                 }
+                else { OriginalDistance = Vector3.Distance(Placements[8].position, transform.position); }
             }
-            else { OriginalDistance = Vector3.Distance(Placements[8].position, transform.position); }
+
             Vector3 move = new Vector3(moveX, 0f, moveZ);
 
             if (!ShiftActivated) { transform.localPosition += move * moveSpeed * Time.deltaTime * StunNumber; }
             else { transform.localPosition += move * RunSpeed * Time.deltaTime * StunNumber; }
             AddReward(-0.001f * move.magnitude);
 
-            float NewDistance;
-            if (!Finished)
+            if (MustGrab.Count > 0)
+            {
+                if (!Finished)
             {
                 if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
                 {
@@ -183,7 +188,8 @@ public class CookingAgent : Agent
             else { NewDistance = Vector3.Distance(Placements[8].position, transform.position); }
             if (!Stove.IsCooking)
             {
-                if (NewDistance < OriginalDistance) { AddReward(0.002f); Debug.Log("Getting Closer"); }
+                if (NewDistance < 1.1) { return; }
+                else if (NewDistance < OriginalDistance) { AddReward(0.002f); Debug.Log("Getting Closer"); }
                 else { AddReward(-0.005f); Debug.Log("Getting Further"); }
             }
             else if (Stove.IsCooking && NewDistance < 1.2)
@@ -192,6 +198,7 @@ public class CookingAgent : Agent
             }
             else { AddReward(-0.004f); Debug.Log("Getting Further"); }
         }
+            }
         else if (InMenu)
         {
             InteractActivated = false;
@@ -203,9 +210,13 @@ public class CookingAgent : Agent
                 CurrentlyHolding = CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite;
                 if (!Finished)
                 {
-                    if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Grabbed the right Item"); }
-                    else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Grabbed the right Item"); }
-                    else { AddReward(-0.2f); Debug.Log("Grabbed the Wrong Item"); }
+                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+                    {
+                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Grabbed the right Item"); }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Grabbed the right Item"); }
+                        else { AddReward(-0.2f); Debug.Log("Grabbed the Wrong Item"); }
+                    }
+                    else { AddReward(-0.2f); Debug.Log("Already had Right Item"); }
                 }
                 else { AddReward(-0.2f); Debug.Log("Dont NEED ITEM"); }
                 CurrentMenu.SetActive(false);
@@ -218,10 +229,14 @@ public class CookingAgent : Agent
             {
                 if (!Finished)
                 {
-                    if (CurrentSelectScript.CorrectChoice == true) { AddReward(-0.2f); Debug.Log("Left without the nessecary Item"); }
-                    else if (CurrentSelectScript.CorrectChoice == false) { AddReward(0.2f); Debug.Log("Left the wrong area"); }
+                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+                    {
+                        if (CurrentSelectScript.CorrectChoice == true) { AddReward(-0.2f); Debug.Log("Left without the nessecary Item"); }
+                        else if (CurrentSelectScript.CorrectChoice == false) { AddReward(0.1f); Debug.Log("Left the wrong area"); }
+                    }
+                    else { Debug.Log("Left Unnessecary Item Select"); }
                 }
-                else { AddReward(0.2f); Debug.Log("Left Unnessecary Item Select"); }
+                else { Debug.Log("Left Unnessecary Item Select"); }
                 CurrentMenu.SetActive(false);
                 InMenu = false;
                 CurrentSelectScript = null;
@@ -236,11 +251,15 @@ public class CookingAgent : Agent
                 StartCoroutine(WaitMenuStun());
                 if (!Finished)
                 {
-                    if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
-                    else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
-                    else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
+                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+                    {
+                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                        else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
+                    }
+                    else { AddReward(0.2f); Debug.Log("Needs to leave"); }
                 }
-                else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
+                else { AddReward(0.2f); Debug.Log("Needs to leave"); }
             }
             else if (MenuWait == false && actions.ContinuousActions[0] < 0)
             {
@@ -250,9 +269,13 @@ public class CookingAgent : Agent
                 StartCoroutine(WaitMenuStun());
                 if (!Finished)
                 {
-                    if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
-                    else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
-                    else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
+                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+                    {
+                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                        else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
+                    }
+                    else { AddReward(0.2f); Debug.Log("Needs to leave"); }
                 }
                 else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
             }
@@ -287,7 +310,7 @@ public class CookingAgent : Agent
     {
         if (other.CompareTag("Wall"))
         {
-            AddReward(-0.1f);
+            AddReward(-0.5f);
             transform.localPosition = new Vector3(-0.21f, 0.68f, 6.157037f);
         }
     }
@@ -297,21 +320,21 @@ public class CookingAgent : Agent
         if (InteractActivated == true)
         {
             if (other.gameObject.GetComponent<OpenMenu>() != null)
-            { 
+            {
                 other.gameObject.GetComponent<OpenMenu>().OpeningMenu();
                 if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(0.1f); Debug.Log("Got to RightPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = true; }
-                else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject) { other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = false; }
+                { AddReward(1f); Debug.Log("Got to RightPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = true; }
+                else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject) { AddReward(-1f); Debug.Log("The WrongPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = false; }
             }
 
             else if (other.gameObject.GetComponent<PlateScript>() != null)
             {
-                if (CurrentlyHolding != null) 
+                if (CurrentlyHolding != null)
                 {
                     if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
-                    { 
-                        AddReward(0.1f);
-                        Debug.Log("Placed right Item"); 
+                    {
+                        AddReward(1f);
+                        Debug.Log("Placed right Item");
 
                         if (MustGrabNumber < MustGrab.Count - 1)
                         { MustGrabNumber += 1; }
@@ -323,31 +346,36 @@ public class CookingAgent : Agent
             }
 
             else if (other.gameObject.GetComponent<CookingProcess>() != null)
-            { 
+            {
                 other.gameObject.GetComponent<CookingProcess>().StartCooking();
                 if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(0.1f); Debug.Log("Got to RightPlace"); }
+                { AddReward(1f); Debug.Log("Got to RightPlace"); }
+                else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject)
+                { AddReward(-1f); Debug.Log("The WrongPlace"); }
             }
 
             else if (other.gameObject.GetComponent<CuttingProcess>() != null)
-            { 
+            {
                 other.gameObject.GetComponent<CuttingProcess>().Cutting();
                 if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(0.1f); Debug.Log("Got to RightPlace"); }
+                { AddReward(1f); Debug.Log("Got to RightPlace"); }
             }
 
             else if (other.gameObject.GetComponent<BellScript>() != null)
-            { 
+            {
                 other.gameObject.GetComponent<BellScript>().GiveFood();
                 if (Finished)
-                { AddReward(0.1f); Debug.Log("Rung Bell"); }
+                { AddReward(1f); Debug.Log("Rung Bell"); }
+                else if (!Finished) { AddReward(-1f); Debug.Log("Rung Bell but not done"); }
             }
 
             else if (other.gameObject.GetComponent<TrashScript>() != null)
-            { 
+            {
                 other.gameObject.GetComponent<TrashScript>().TrashFood();
-                if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
-                { AddReward(0.05f); Debug.Log("Got to RightPlace"); }
+                if (CurrentlyHolding != null && CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
+                { AddReward(0.5f); Debug.Log("Binned to the Right Food"); }
+                else if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
+                { AddReward(-1f); Debug.Log("Binned to the Right Food"); }
             }
         }
     }
