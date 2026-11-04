@@ -4309,7 +4309,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
   m_BrainParameters:
-    VectorObservationSize: 5
+    VectorObservationSize: 6
     NumStackedVectorObservations: 2
     m_ActionSpec:
       m_NumContinuousActions: 4
@@ -4342,7 +4342,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 7500
+  MaxStep: 10000
   AgentBehavior: {fileID: 0}
   Placements:
   - {fileID: 1393291119344911678}
