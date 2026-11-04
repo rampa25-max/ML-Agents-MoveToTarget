@@ -212,6 +212,14 @@ public class CookingAgent : Agent
             InteractActivated = false;
             ShiftActivated = false;
 
+            if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+            {
+                if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
+                else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
+            }
+            else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
+
             if (actions.ContinuousActions[1] > 0)
             {
 
@@ -239,8 +247,8 @@ public class CookingAgent : Agent
                 {
                     if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[2]])
                     {
-                        if (CurrentSelectScript.CorrectChoice == true) { AddReward(-0.25f); Debug.Log("Left without the nessecary Item"); }
-                        else if (CurrentSelectScript.CorrectChoice == false) { AddReward(0.01f); Debug.Log("Left the wrong area"); }
+                        if (CurrentSelectScript.CorrectChoice == true) { AddReward(-1f); Debug.Log("Left without the nessecary Item"); }
+                        else if (CurrentSelectScript.CorrectChoice == false) { AddReward(0.05f); Debug.Log("Left the wrong area"); }
                     }
                     else { Debug.Log("Left Unnessecary Item Select"); }
                 }
@@ -265,9 +273,9 @@ public class CookingAgent : Agent
                         else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.1f); Debug.Log("Moved to the right Item"); }
                         else { AddReward(-0.2f); Debug.Log("Moved to the Wrong Item"); }
                     }
-                    else { AddReward(0.2f); Debug.Log("Needs to leave"); }
+                    else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
                 }
-                else { AddReward(0.2f); Debug.Log("Needs to leave"); }
+                else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
             }
             else if (MenuWait == false && actions.ContinuousActions[0] < 0)
             {
