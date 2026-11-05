@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.UI;
 
 public class PlateScript : MonoBehaviour
@@ -70,6 +71,8 @@ public class PlateScript : MonoBehaviour
                     movement -= 0.06f;
 
                     Destroy(DeleteObject);
+
+                    if (Agent.MustGrabNumber > 0 && Agent.CurrentlyHolding == Agent.Foods[Agent.MustGrab[Agent.MustGrabNumber - 1]]) { Agent.MustGrabNumber -= 1; }
 
                     Debug.Log("Removed Food");
                     WaitTime = true;

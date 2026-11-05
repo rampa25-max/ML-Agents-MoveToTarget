@@ -18,7 +18,7 @@ public class CookingAgent : Agent
     [SerializeField] private BehaviorParameters AgentBehavior;
 
     [SerializeField] private Transform[] Placements;
-    [SerializeField] private Sprite[] Foods;
+    [SerializeField] public Sprite[] Foods;
 
 
     [SerializeField] private PlateScript Plate;
@@ -57,8 +57,8 @@ public class CookingAgent : Agent
     public int MaxNum = 0;
     public int ChooseNumber = 0;
 
-    [SerializeField] List<int> MustGrab = new List<int>();
-    [SerializeField] int MustGrabNumber = 0;
+    [SerializeField] public List<int> MustGrab = new List<int>();
+    public int MustGrabNumber = 0;
     [SerializeField] bool Finished = false;
 
     public Vector3 CurrentTask;
@@ -115,6 +115,8 @@ public class CookingAgent : Agent
         sensor.AddObservation((float)StepCount / MaxStep);
 
         sensor.AddObservation(NewDistance);
+
+        sensor.AddObservation(InMenu);
 
         for (int i = 0; i < Foods.Length; i++) 
         {
@@ -415,7 +417,7 @@ public class CookingAgent : Agent
     }
     IEnumerator WaitMenuStun()
     {
-        yield return new WaitForSecondsRealtime(0.25f);
+        yield return new WaitForSeconds(0.15f / Time.timeScale);
         yield return MenuWait = false;   
     }
 
