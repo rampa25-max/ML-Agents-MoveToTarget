@@ -95,7 +95,8 @@ public class CookingAgent : Agent
                 Debug.LogError("Please assign Point A, Point B, and the Checkpoint Prefab in the Inspector!");
                 return;
             }
-
+        StopCoroutine(TakingTooLong());
+        StartCoroutine(TakingTooLong());
             for (int i = 1; i <= checkpointCount; i++)
             {
                 float t = (float)i / (checkpointCount + 1);
@@ -462,17 +463,16 @@ public class CookingAgent : Agent
                                 Debug.Log("Placed right Item");
                                 Destroy(checkpointHolder);
                                 RewardRecieved = false;
-
-                                if (MustGrabNumber < MustGrab.Count - 1)
-                                { MustGrabNumber += 1; }
-                                else { Finished = true; }
                             }
+                            if (MustGrabNumber < MustGrab.Count - 1)
+                            { MustGrabNumber += 1; }
+                            else { Finished = true; }
                             other.gameObject.GetComponent<PlateScript>().PlateFood();
                             InteractActivated = false;
                             InteractCD = true; StartCoroutine(InteractCooldown());
                         }
                     }
-                    else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown()); }
+                    //else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); AddReward(-5f); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown()); }
                 }
 
                 else if (other.gameObject.GetComponent<CookingProcess>() != null)
@@ -483,7 +483,7 @@ public class CookingAgent : Agent
                         if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
                         { AddReward(1f); Debug.Log("Got to RightPlace"); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown()); }
                         else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject)
-                        { AddReward(-1f); Debug.Log("The WrongPlace"); InteractCD = true; StartCoroutine(InteractCooldown()); }
+                        { AddReward(-0.25f); Debug.Log("The WrongPlace"); InteractCD = true; StartCoroutine(InteractCooldown()); }
                     }
                     else if (Stove.IsCooking == true)
                     {
@@ -552,4 +552,13 @@ public class CookingAgent : Agent
         yield return new WaitForSeconds(0.5f / Time.timeScale);
         yield return InteractCD = false;
     }
+
+    IEnumerator TakingTooLong()
+    {
+        yield return new WaitForSeconds(25f);
+        AddReward(-2.5f); 
+        Destroy(checkpointHolder); 
+        RewardRecieved = false;
+    }
+
 }
