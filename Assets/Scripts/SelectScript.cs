@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.SocialPlatforms.GameCenter;
 public class SelectScript : MonoBehaviour
 {
-    CookingAgent Agent;
+    public CookingAgent Agent;
     RectTransform ThisRect;
     public List<RectTransform> Foods;
     [SerializeField] int MaxNum;
@@ -12,7 +12,6 @@ public class SelectScript : MonoBehaviour
     public GameObject DisableParent;
     void Awake()
     {
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
         ThisRect = this.gameObject.GetComponent<RectTransform>();
         MaxNum = Foods.Count - 1;
     }

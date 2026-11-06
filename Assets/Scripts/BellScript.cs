@@ -10,6 +10,8 @@ public class BellScript : MonoBehaviour
     CookingAgent Agent;
     PlateScript Plate;
 
+    public ShopHolderScript Holder;
+
     public TextMeshProUGUI CustomerText;
 
     public int Served = 0;
@@ -19,15 +21,14 @@ public class BellScript : MonoBehaviour
     bool WaitTime = false;
     void Awake()
     {
-        CustomerText = GameObject.Find("CustomerServer").GetComponent<TextMeshProUGUI>();
-        Plate = GameObject.FindAnyObjectByType<PlateScript>();
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
+        Plate = Holder.Plate;
+        Agent = Holder.Agent;
     }
 
 
     private void Update()
     {
-        if (CurrentNpc == null) { CurrentNpc = GameObject.FindAnyObjectByType<NpcFoodWantScript>(); }
+        if (CurrentNpc == null) { CurrentNpc = Holder.CurrentNpc; }
     }
 
     public void GiveFood()

@@ -7,6 +7,8 @@ public class NpcSpawnScript : MonoBehaviour
     public GameObject Npc;
 
     public GameObject CurrentNpc;
+
+    public ShopHolderScript Holder;
     void Start()
     {
         NpcSpawn();
@@ -20,6 +22,6 @@ public class NpcSpawnScript : MonoBehaviour
     void NpcSpawn()
     {
         if (CurrentNpc == null)
-        { GameObject CurrNpc = Instantiate(Npc); CurrNpc.name = "NPC";  CurrentNpc = CurrNpc; }
+        { GameObject CurrNpc = Instantiate(Npc,Holder.gameObject.transform); CurrNpc.name = "NPC";  CurrentNpc = CurrNpc; CurrentNpc.GetComponentInChildren<NpcFoodWantScript>().Spawner = this; CurrentNpc.GetComponent<NpcMovement>().EndPoint = Holder.NpcEndPlacement; Holder.CurrentNpc = CurrentNpc.GetComponentInChildren<NpcFoodWantScript>(); CurrentNpc.GetComponentInChildren<NpcFoodWantScript>().Agent = Holder.Agent; CurrentNpc.GetComponentInChildren<NpcFoodWantScript>().Spawner = this; CurrentNpc.GetComponentInChildren<NpcFoodWantScript>().Holder = Holder; Holder.CurrentNpc = CurrentNpc.GetComponentInChildren<NpcFoodWantScript>(); }
     }
 }

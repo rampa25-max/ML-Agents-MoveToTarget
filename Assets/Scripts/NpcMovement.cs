@@ -8,7 +8,6 @@ public class NpcMovement : MonoBehaviour
     void Start()
     {
         Npc = this.gameObject;
-        EndPoint = GameObject.Find("NPC EndPoint").transform;
     }
 
     void Update()

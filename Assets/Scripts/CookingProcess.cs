@@ -7,7 +7,7 @@ public class CookingProcess : MonoBehaviour
 {
     [Header("Requirements")]
 
-    CookingAgent Agent;
+    public CookingAgent Agent;
 
     public Image SpriteHolder;
     public TextMeshProUGUI CountDown;
@@ -35,7 +35,6 @@ public class CookingProcess : MonoBehaviour
     public int BurntTimer = 10;
     void Awake()
     {
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
         CurrentSprite = null;
         InUse = false;
         CanTake = false;
@@ -65,10 +64,13 @@ public class CookingProcess : MonoBehaviour
 
         else if (InUse == true && CanTake == true)
         {
+            Agent.AddReward(2f);
             IsCooking = false;
             Debug.Log("Taking Food");
             StopCoroutine(WaitTimer());
             Agent.CurrentlyHolding = CurrentSprite;
+            Destroy(Agent.checkpointHolder); 
+            Agent.RewardRecieved = false;
             CurrentSprite = null;
             InUse = false;
             CanTake = false;

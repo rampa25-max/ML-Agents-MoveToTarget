@@ -7,12 +7,13 @@ using TMPro;
 
 public class NpcFoodWantScript : MonoBehaviour
 {
-    CookingAgent Agent;
+    public ShopHolderScript Holder;
+    public CookingAgent Agent;
 
-    NpcSpawnScript Spawner;
+    public NpcSpawnScript Spawner;
     public GameObject NpcParent;
 
-    int MaxIngredientsAllowed = 4;
+    int MaxIngredientsAllowed = 1;
     public Sprite[] FoodIngredients;
     public List<Sprite> NpcWants = new List<Sprite>();
     public GameObject SpriteSheet;
@@ -20,14 +21,11 @@ public class NpcFoodWantScript : MonoBehaviour
     public GameObject FoodOrderCam;
     void Awake()
     {
-        Spawner = GameObject.FindAnyObjectByType<NpcSpawnScript>();
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
-        FoodOrderCam = GameObject.Find("FoodOrderStorer");
                     
         NpcWants.Add(FoodIngredients[0]);
         NpcWants.Add(FoodIngredients[2]);
 
-        int Amount = Random.Range(1, MaxIngredientsAllowed);
+        int Amount = Random.Range(0, MaxIngredientsAllowed);
 
         for (int i = 0; i < Amount; i++)
         {
@@ -40,6 +38,7 @@ public class NpcFoodWantScript : MonoBehaviour
 
     private void Start()
     {
+        FoodOrderCam = Holder.FoodOrderCam;
         float movement = 0;
         foreach (var item in NpcWants)
         {

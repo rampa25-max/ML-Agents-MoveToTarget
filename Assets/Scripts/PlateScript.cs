@@ -12,21 +12,19 @@ public class PlateScript : MonoBehaviour
     public GameObject ParentHolder;
     public List<Sprite> PlatedFood = new List<Sprite>();
 
+    public  PlateStoreSpawner PlatestoreSpawner;
+
     public List<GameObject> SpriteGameObject = new List<GameObject>();
-    CookingAgent Agent;
+    public CookingAgent Agent;
 
     [SerializeField] float movement = 0;
 
     bool WaitTime = false;
-    void Awake()
-    {
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
-    }
 
     void Update()
     {
         if (ParentHolder == null)
-        { ParentHolder = GameObject.Find("PlateStorer"); }
+        { ParentHolder = PlatestoreSpawner.CurrentStorer; }
     }
     public void PlateFood()
     {

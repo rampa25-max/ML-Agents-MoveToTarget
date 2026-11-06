@@ -5,12 +5,13 @@ using UnityEngine;
 
 public class OpenMenu : MonoBehaviour
 {
+    public ShopHolderScript Holder;
     CookingAgent Agent;
     public GameObject Menu;
 
     void Awake()
     {
-        Agent = GameObject.FindAnyObjectByType<CookingAgent>();
+        Agent = Holder.Agent;
     }
 
     public void OpeningMenu()

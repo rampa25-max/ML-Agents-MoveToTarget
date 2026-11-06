@@ -28,7 +28,7 @@ public class CookingAgent : Agent
     [SerializeField] private Animator animator;
 
     [Header("Placement")]
-    TextMeshProUGUI ScoreBoard;
+    [SerializeField] private TextMeshProUGUI ScoreBoard;
 
     [SerializeField] private Renderer floor;
 
@@ -67,31 +67,119 @@ public class CookingAgent : Agent
 
     float NewDistance;
 
-    bool RewardRecieved = false;
+    public bool RewardRecieved = false;
+
+    public ShopHolderScript Holder;
+
+    Vector3 FirstPos;
+
+    bool InteractCD = false;
+
+
+    [Header("References")]
+    public Transform pointA;
+    public Transform pointB;
+    public GameObject checkpointPrefab;
+
+    public GameObject checkpointHolder;
+
+    [Header("Settings")]
+    [Range(1, 50)]
+    public int checkpointCount = 5;
+
+    bool isenabled = false;
+    void GenerateCheckpoints()
+    {
+            if (pointA == null || pointB == null || checkpointPrefab == null)
+            {
+                Debug.LogError("Please assign Point A, Point B, and the Checkpoint Prefab in the Inspector!");
+                return;
+            }
+
+            for (int i = 1; i <= checkpointCount; i++)
+            {
+                float t = (float)i / (checkpointCount + 1);
+
+                Vector3 spawnPosition = Vector3.Lerp(pointA.position, pointB.position, t);
+
+                Vector3 direction = (pointB.position - pointA.position).normalized;
+                Quaternion spawnRotation = Quaternion.LookRotation(direction);
+
+                GameObject newCheckpoint = Instantiate(checkpointPrefab, spawnPosition, spawnRotation, checkpointHolder.transform);
+                newCheckpoint.name = $"Checkpoint_{i}";
+            }
+            Debug.Log("Spawned CheckPoints");
+    }
     private void Start()
     {
-        Plate = GameObject.FindAnyObjectByType<PlateScript>();
-        ScoreBoard = GameObject.Find("ScoreBoard").GetComponent<TextMeshProUGUI>();
+        InteractCD = false;
+        pointA = this.gameObject.transform;
+        FirstPos = transform.localPosition;
         idleColour = floor.material.color;
         ShiftActivated = false;
+    }
+
+    private void Update()
+    {
+        if (checkpointHolder == null) { checkpointHolder = Holder.CheckPointHolder; }
+        if (checkpointHolder != null) 
+        {
+            if (MustGrab.Count > 0)
+            {
+                if (RewardRecieved == false)
+                {
+                    RewardRecieved = true;
+                    if (!Finished)
+                    {
+                        if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
+                        {
+                            pointB = Placements[7].transform; Debug.Log("Point B Plate");
+                        }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
+                        {
+                            pointB = Placements[6].transform; Debug.Log("Point B Cook");
+                        }
+                        else
+                        { pointB = Placements[MustGrab[MustGrabNumber]].transform; Debug.Log("Point B Grab"); }
+
+                        if (Stove.IsCooking)
+                        {
+                            pointB = Placements[6].transform; Debug.Log("Point B Cook");
+                        }
+                    }
+                    else { pointB = Placements[8].transform; }
+                    GenerateCheckpoints();
+                    Debug.Log("Checking");
+                }
+            }
+        }
+    }
+    public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
+    {
+        actionMask.SetActionEnabled(3, 0, isenabled);
     }
     private void LateUpdate()
     {
         if (Npc == null) 
         {
-            Npc = GameObject.FindAnyObjectByType<NpcFoodWantScript>();
+            Npc = Holder.CurrentNpc;
             MustGrab = new List<int>();
             MustGrabNumber = 0;
             Finished = false;
-            for (int j = 0; j < Npc.NpcWants.Count; j++)
+            if (Npc != null)
             {
-                for (int i = 0; i < Foods.Length; i++)
+                for (int j = 0; j < Npc.NpcWants.Count; j++)
                 {
-                    if (Npc.NpcWants[j] == Foods[i])
-                    { MustGrab.Add(i); break; }
+                    for (int i = 0; i < Foods.Length; i++)
+                    {
+                        if (Npc.NpcWants[j] == Foods[i])
+                        { MustGrab.Add(i); break; }
+                    }
                 }
+                Destroy(checkpointHolder); RewardRecieved = false;
             }
         }
+        if (OriginalDistance < 1.2f) { isenabled = false; } else { isenabled = true; }
         if (CurrentlyHolding != null)
         {
             if (FoodHolder.sprite != CurrentlyHolding) { FoodHolder.sprite = CurrentlyHolding; }
@@ -127,18 +215,20 @@ public class CookingAgent : Agent
     }
     public override void OnActionReceived(ActionBuffers actions)
     {
-        float moveX = actions.ContinuousActions[0] * -1;
-        float moveZ = actions.ContinuousActions[1] * -1;
+        int moveZ = actions.DiscreteActions[0] - 1;
+        int moveX = actions.DiscreteActions[1] - 1;
+        int Interaction = actions.DiscreteActions[2];
+        int Run = actions.DiscreteActions[3];
 
         if (!InMenu)
         {
             if (moveX != 0 || moveZ != 0) { animator.SetBool("Moving", true); } else if (moveX == 0 && moveZ == 0) { animator.SetBool("Moving", false); }
 
-            if (actions.ContinuousActions[2] == 1) { ShiftActivated = true; }
-            else if (actions.ContinuousActions[2] != 1) { ShiftActivated = false; }
+            if (Run == 1) { ShiftActivated = true; }
+            else if (Run != 1) { ShiftActivated = false; }
             animator.SetBool("Running", ShiftActivated);
-            if (actions.ContinuousActions[3] == 1) { InteractActivated = true; }
-            else if (actions.ContinuousActions[3] != 1) { InteractActivated = false; }
+            if (Interaction == 1) { InteractActivated = true; }
+            else if (Interaction != 1) { InteractActivated = false; }
             animator.SetBool("Interacting", InteractActivated);
 
             if (MustGrab.Count > 0)
@@ -190,23 +280,15 @@ public class CookingAgent : Agent
                 }
             }
             else { NewDistance = Vector3.Distance(Placements[8].position, transform.position); }
-                if (RewardRecieved == false && NewDistance < 1.2f) 
-                { 
-                    if (GetCumulativeReward() < 0)
-                    { RewardRecieved = true; SetReward(1f); Debug.Log("Got to the DesignatedPlace Set Points to 1"); }
-                    else { RewardRecieved = true; AddReward(1f); Debug.Log("Got to the DesignatedPlace Added 1 Point"); }
-                }
-               if (!Stove.IsCooking)
+
+                if (Stove.IsCooking)
                 {
-                    if (NewDistance < 1.1) { return; }
-                    else if (NewDistance < OriginalDistance) { AddReward(0.002f); Debug.Log("Getting Closer"); }
-                    else { AddReward(-0.003f); Debug.Log("Getting Further"); }
+                    if (NewDistance < 1.2)
+                    {
+                        AddReward(0.001f); Debug.Log("Staying at Stove");
+                    }
+                    else { AddReward(-0.004f); Debug.Log("Getting Further"); }
                 }
-                else if (Stove.IsCooking && NewDistance < 1.2)
-                {
-                    AddReward(0.001f); Debug.Log("Staying at Stove");
-                }
-                else { AddReward(-0.004f); Debug.Log("Getting Further"); }
             }
         }
         else if (InMenu)
@@ -222,28 +304,35 @@ public class CookingAgent : Agent
             }
             else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
 
-            if (actions.ContinuousActions[1] > 0)
+            if (moveX > 0)
             {
-
-                CurrentlyHolding = CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite;
                 if (!Finished)
                 {
-                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]])
+                    if (MustGrab[MustGrabNumber] != 3 && CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
                     {
-                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); }
-                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); }
+                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); Destroy(checkpointHolder); RewardRecieved = false; }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); Destroy(checkpointHolder); RewardRecieved = false; }
+                        else { AddReward(-0.4f); Debug.Log("Grabbed the Wrong Item"); }
+                    }
+                    else if (MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[2])
+                    {
+                        if (CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[MustGrab[MustGrabNumber]]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); Destroy(checkpointHolder); RewardRecieved = false; }
+                        else if (MustGrab[MustGrabNumber] == 3 && CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite == Foods[2]) { AddReward(0.2f); Debug.Log("Grabbed the right Item"); Destroy(checkpointHolder); RewardRecieved = false; }
                         else { AddReward(-0.4f); Debug.Log("Grabbed the Wrong Item"); }
                     }
                     else { AddReward(-0.5f); Debug.Log("Already had Right Item"); }
                 }
                 else { AddReward(-0.2f); Debug.Log("Dont NEED ITEM"); }
+
+                CurrentlyHolding = CurrentSelectScript.Foods[ChooseNumber].GetComponent<Image>().sprite;
+
                 CurrentMenu.SetActive(false);
                 InMenu = false;
                 CurrentSelectScript = null;
                 CurrentMenu = null;
             }
 
-            if (actions.ContinuousActions[1] < 0)
+            if (moveX < 0)
             {
                 if (!Finished)
                 {
@@ -260,7 +349,7 @@ public class CookingAgent : Agent
                 CurrentSelectScript = null;
                 CurrentMenu = null;
             }
-            if (MenuWait == false && actions.ContinuousActions[0] > 0)
+            if (MenuWait == false && moveZ > 0)
             {
 
                 MenuWait = true;
@@ -279,7 +368,7 @@ public class CookingAgent : Agent
                 }
                 else { AddReward(-0.2f); Debug.Log("Needs to leave"); }
             }
-            else if (MenuWait == false && actions.ContinuousActions[0] < 0)
+            else if (MenuWait == false && moveZ < 0)
             {
                 MenuWait = true;
                 if (ChooseNumber > 0) { ChooseNumber -= 1; }
@@ -303,17 +392,24 @@ public class CookingAgent : Agent
     }
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        var continuous = actionsOut.ContinuousActions;
+        //var continuous = actionsOut.ContinuousActions;
+        var discrete = actionsOut.DiscreteActions;
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        continuous[0] = (kb.dKey.isPressed ? 1f : 0f)
+        /*continuous[0] = (kb.dKey.isPressed ? 1f : 0f)
                       - (kb.aKey.isPressed ? 1f : 0f);
         continuous[1] = (kb.wKey.isPressed ? 1f : 0f)
-                      - (kb.sKey.isPressed ? 1f : 0f);
+                      - (kb.sKey.isPressed ? 1f : 0f);*/
 
-        continuous[2] = (kb.shiftKey.isPressed ? 1f : 0f);
-        continuous[3] = (kb.eKey.isPressed ? 1f : 0f);
+        discrete[0] = (kb.wKey.isPressed ? 1 : 0)
+                    - (kb.sKey.isPressed ? 1 : 0);
+
+        discrete[1] = (kb.dKey.isPressed ? 1 : 0)
+                    -(kb.aKey.isPressed ? 1 : 0);
+
+        discrete[2] = (kb.eKey.isPressed ? 1 : 0);
+        discrete[3] = (kb.shiftKey.isPressed ? 1 : 0);
     }
     public void Stunned()
     { StunNumber = 0; }
@@ -328,8 +424,15 @@ public class CookingAgent : Agent
     {
         if (other.CompareTag("Wall"))
         {
-            AddReward(-0.5f);
-            transform.localPosition = new Vector3(-0.21f, 0.68f, 6.157037f);
+            AddReward(-5f);
+            transform.localPosition = FirstPos;
+            Destroy(checkpointHolder);
+            RewardRecieved = false;
+        }
+        else if (other.CompareTag("CheckPoint"))
+        {
+            AddReward(1f);
+            Destroy(other.gameObject);
         }
     }
 
@@ -337,69 +440,93 @@ public class CookingAgent : Agent
     {
         if (InteractActivated == true)
         {
-            if (other.gameObject.GetComponent<OpenMenu>() != null)
+            if (InteractCD == false)
             {
-                other.gameObject.GetComponent<OpenMenu>().OpeningMenu();
-                if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] && Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(1f); Debug.Log("Got to RightPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = true; RewardRecieved = false; }
-                else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject) { AddReward(-1f); Debug.Log("The WrongPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = false; }
-            }
-
-            else if (other.gameObject.GetComponent<PlateScript>() != null)
-            {
-                if (CurrentlyHolding != null)
+                if (other.gameObject.GetComponent<OpenMenu>() != null)
                 {
-                    if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
-                    {
-                        AddReward(1f);
-                        Debug.Log("Placed right Item");
-                        RewardRecieved = false;
-
-                        if (MustGrabNumber < MustGrab.Count - 1)
-                        { MustGrabNumber += 1; }
-                        else { Finished = true; }
-                    }
-                    other.gameObject.GetComponent<PlateScript>().PlateFood();
-                    InteractActivated = false;
-                    return;
+                    other.gameObject.GetComponent<OpenMenu>().OpeningMenu();
+                    if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]] && Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
+                    { AddReward(1f); Debug.Log("Got to RightPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = true; }
+                    else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject) { AddReward(-1f); Debug.Log("The WrongPlace"); other.gameObject.GetComponent<OpenMenu>().Menu.GetComponentInChildren<SelectScript>().CorrectChoice = false; }
                 }
-                else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); InteractActivated = false; return; }
-            }
 
-            else if (other.gameObject.GetComponent<CookingProcess>() != null)
-            {
-                other.gameObject.GetComponent<CookingProcess>().StartCooking();
-                if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(1f); Debug.Log("Got to RightPlace"); RewardRecieved = false; InteractActivated = false; return; }
-                else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject)
-                { AddReward(-1f); Debug.Log("The WrongPlace"); }
-                InteractActivated = false;
-            }
+                else if (other.gameObject.GetComponent<PlateScript>() != null)
+                {
+                    if (CurrentlyHolding != null)
+                    {
+                        if (CurrentlyHolding != Foods[2])
+                        {
+                            if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]])
+                            {
+                                AddReward(1f);
+                                Debug.Log("Placed right Item");
+                                Destroy(checkpointHolder);
+                                RewardRecieved = false;
 
-            else if (other.gameObject.GetComponent<CuttingProcess>() != null)
-            {
-                other.gameObject.GetComponent<CuttingProcess>().Cutting();
-                if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
-                { AddReward(1f); Debug.Log("Got to RightPlace"); RewardRecieved = false; }
-                InteractActivated = false;
-            }
+                                if (MustGrabNumber < MustGrab.Count - 1)
+                                { MustGrabNumber += 1; }
+                                else { Finished = true; }
+                            }
+                            other.gameObject.GetComponent<PlateScript>().PlateFood();
+                            InteractActivated = false;
+                            InteractCD = true; StartCoroutine(InteractCooldown());
+                        }
+                    }
+                    else if (CurrentlyHolding == null) { other.gameObject.GetComponent<PlateScript>().UnPlateFood(); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown()); }
+                }
 
-            else if (other.gameObject.GetComponent<BellScript>() != null)
-            {
-                other.gameObject.GetComponent<BellScript>().GiveFood();
-                if (Finished)
-                { AddReward(1f); Debug.Log("Rung Bell"); RewardRecieved = false; }
-                else if (!Finished) { AddReward(-1f); Debug.Log("Rung Bell but not done"); }
-                InteractActivated = false;
-            }
+                else if (other.gameObject.GetComponent<CookingProcess>() != null)
+                {
+                    other.gameObject.GetComponent<CookingProcess>().StartCooking();
+                    if (Stove.IsCooking == false)
+                    {
+                        if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
+                        { AddReward(1f); Debug.Log("Got to RightPlace"); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown()); }
+                        else if (Placements[MustGrab[MustGrabNumber]].gameObject != other.gameObject)
+                        { AddReward(-1f); Debug.Log("The WrongPlace"); InteractCD = true; StartCoroutine(InteractCooldown()); }
+                    }
+                    else if (Stove.IsCooking == true)
+                    {
+                        AddReward(1f); Debug.Log("Got to RightPlace"); InteractActivated = false; InteractCD = true; StartCoroutine(InteractCooldown());
+                    }
+                        InteractActivated = false;
+                }
 
-            else if (other.gameObject.GetComponent<TrashScript>() != null)
-            {
-                other.gameObject.GetComponent<TrashScript>().TrashFood();
-                if (CurrentlyHolding != null && CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
-                { AddReward(0.5f); Debug.Log("Binned to the Right Food"); RewardRecieved = false; }
-                else if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
-                { AddReward(-1f); Debug.Log("Binned the needed Food"); }
+                else if (other.gameObject.GetComponent<CuttingProcess>() != null)
+                {
+                    other.gameObject.GetComponent<CuttingProcess>().Cutting();
+                    if (Placements[MustGrab[MustGrabNumber]].gameObject == other.gameObject)
+                    { AddReward(1f); Debug.Log("Got to RightPlace"); Destroy(checkpointHolder); RewardRecieved = false; }
+                    InteractActivated = false;
+                }
+
+                else if (other.gameObject.GetComponent<BellScript>() != null)
+                {
+                        if (Finished)
+                        { other.gameObject.GetComponent<BellScript>().GiveFood(); AddReward(1f); Debug.Log("Rung Bell"); InteractCD = true; StartCoroutine(InteractCooldown()); }
+                        else if (!Finished) 
+                        {
+                        /*if (CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
+                        {
+                          if (MustGrab[MustGrabNumber] == 3 && CurrentlyHolding != Foods[MustGrab[3]] || MustGrab[MustGrabNumber] != 3)
+                          {
+                            if (!Stove.IsCooking) {
+                                other.gameObject.GetComponent<BellScript>().GiveFood(); AddReward(-1f); Debug.Log("Rung Bell but not done"); InteractCD = true; StartCoroutine(InteractCooldown());
+                            }
+                          }
+                        }*/
+                    }
+                    InteractActivated = false;
+                }
+
+                else if (other.gameObject.GetComponent<TrashScript>() != null)
+                {
+                    other.gameObject.GetComponent<TrashScript>().TrashFood();
+                    if (CurrentlyHolding != null && CurrentlyHolding != Foods[MustGrab[MustGrabNumber]])
+                    { AddReward(0.5f); Debug.Log("Binned to the Right Food"); Destroy(checkpointHolder); RewardRecieved = false; }
+                    else if (CurrentlyHolding == Foods[MustGrab[MustGrabNumber]] || MustGrab[MustGrabNumber] == 3 && CurrentlyHolding == Foods[2])
+                    { AddReward(-1f); Debug.Log("Binned the needed Food"); }
+                }
             }
         }
     }
@@ -420,5 +547,9 @@ public class CookingAgent : Agent
         yield return new WaitForSeconds(0.15f / Time.timeScale);
         yield return MenuWait = false;   
     }
-
+    IEnumerator InteractCooldown()
+    {
+        yield return new WaitForSeconds(0.5f / Time.timeScale);
+        yield return InteractCD = false;
+    }
 }
